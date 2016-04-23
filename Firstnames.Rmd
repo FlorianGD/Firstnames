@@ -1,0 +1,397 @@
+---
+title: "Given names"
+author: "Florian Gaudin-Delrieu"
+date: "21 mars 2016"
+output: html_document
+---
+
+## About 
+
+The idea is to study the data about given names from [wikipedia.org](http://wikipedia.org), and in particular, what are the occupations of people with that given name.
+It turns out that scrapping wikipedia, getting the first names and the occupation would be difficult, as the data is unstructured. Hopefully, the [wikidata project](http://wikidata.org) exists. It gives access to structured data, so we will use that to get the informations we want.
+
+```{r Needed libraries, message=FALSE}
+library(ggplot2)
+library(WikidataR)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(ggthemes)
+library(plotly)
+library(SPARQL)
+library(wordcloud)
+library(stringr)
+theme_set(theme_minimal(12))
+```
+
+## Retrieving informations
+
+We will get the item reference to the given name we want to study (it starts by a Q and is not meaningful). Then we can use that item to feed a SPARQL query that will give us the dataset.
+
+### Getting the item id
+
+We want to get informations about one first name, let's say "Marcel". We will use the find_item function from the WikidataR library.
+
+```{r Getting the list}
+liste <- find_item("Marcel") #Limit is set by default to 10 results, it should be enough here.
+liste
+```
+
+Now we have a list with 10 results, and we want to extract the id of the first entry with "given name", or the first entry. I wrapped these steps into a function.
+
+```{r Getting the id}
+selectionnerID<-function(nom){
+  liste <- find_item(nom)
+  id <-""
+  for(i in 1:length(liste)){
+    if(is.null(liste[[i]]$description)){
+      next
+    }
+    if(grepl("given name",liste[[i]]$description)){ 
+      id <- liste[[i]]$id
+        break # we break on the first given name we find
+    }
+  }
+  # If we haven't found given name, then we take the first id
+  if(id==""){
+    id<-liste[[1]]$id
+  } 
+  return(id)
+}
+id<-selectionnerID("Florian")
+get_item(id) #Sanity check
+```
+
+### Modifying the query
+
+We will query wikidata with a query I came up with, and modifying the given name id we got. The place where to replace is given by **REPLACE_ID**, so that's what we will be looking for to replace.  
+The parameters are :
+
+* __P735__ for given name
+* __P106__ for occupation
+* __P569__ for the date of birt
+* __P27__ for the country
+* Labels are the french ones, with a fallback in english.
+
+You can find the parameters code using `find_property("parameter")` from WikidataR.
+
+```{r}
+endpoint <- "https://query.wikidata.org/bigdata/namespace/wdq/sparql"
+#endpoint <- "https://query.wikidata.org/sparql"
+
+prefix<-c("wd","<http://www.wikidata.org/entity/>",
+          "wdt", "<http://www.wikidata.org/prop/direct/>",
+          "wikibase","<http://wikiba.se/ontology#>")
+
+generic_query <-"SELECT ?item ?itemLabel ?occupationLabel ?paysLabel ?annee
+WHERE
+{
+?item wdt:P735 wd:REPLACE_ID .
+?item wdt:P106 ?occupation .
+OPTIONAL {?item wdt:P569 ?anneeN} .
+OPTIONAL {?item wdt:P27 ?pays} .
+BIND(YEAR(?anneeN) as ?annee) .	
+SERVICE wikibase:label { bd:serviceParam wikibase:language \"fr,en\" }
+}
+ORDER BY DESC (?annee)"
+
+query<-sub("REPLACE_ID",id,generic_query)
+```
+
+### Executing the request
+
+We will use the SPARQL library to get the dataset.
+
+```{r}
+source("mySPARQL.R")
+res <- mySPARQL(endpoint,query,ns=prefix,format = "xml")
+resultats<- res$results
+summary(resultats)
+glimpse(resultats)
+```
+
+### Cleaning the data
+
+We need to format the data we got. The selectionnerNom function will fetch the middle part of the returned column, which is in the form `"GivenName LastName"@fr`. So we will apply this function to the "labels" columns (itemLabel, occupationLabel and paysLabel), and then convert those columns to factors.
+
+```{r}
+selectionnerNom<-function(x,colonne,nom) {
+  a<-x %>%
+    separate_(colonne,c("debut",nom,"fin"),sep="\"",remove=TRUE) %>%
+    select(-debut,-fin)
+  a[,nom]<-factor(a[,nom])
+  return(a)
+}
+
+resultats<-selectionnerNom(resultats,"itemLabel","nom")
+resultats<-selectionnerNom(resultats,"occupationLabel","metier")
+resultats<-selectionnerNom(resultats,"paysLabel","pays")
+resultats<-tbl_df(resultats)
+resultats
+```
+
+## Some plots
+
+```{r}
+# ggplot(data=distinct(resultats,item),aes(x=annee))+
+#   geom_histogram(binwidth=5)+
+#   scale_x_continuous(breaks=seq(1900,2000,10),limits=c(1900,2000))+
+#   ylab("Nombre")
+```
+
+```{r}
+# profession_top15<-resultats %>%
+#   select(nom,metier) %>%
+#   count(metier) %>%
+#   top_n(15,wt=n) %>%
+#   arrange(desc(n))
+# profession_top15$metier<-droplevels(profession_top15$metier)
+# str(profession_top15)
+# profession_top15
+# 
+# ggplot(data=profession_top15,aes(x=metier,y=n))+
+#   geom_bar(stat='identity')+
+#   scale_x_discrete(limits=arrange(profession_top15,n)$metier)+
+#   coord_flip()
+
+```
+
+```{r}
+# table(resultats$pays)
+# mean(table(resultats$pays))
+# 
+# top10_pays<-resultats %>%
+#   distinct(item)%>%
+#   count(pays) %>%
+#   top_n(10,n) %>%
+#   arrange(desc(n)) %>% 
+#   droplevels
+# #top10_pays$pays<-droplevels(top10_pays$pays)
+# levels(top10_pays$pays)
+# 
+# ggplotly(ggplot(data=subset(resultats,
+#                    pays %in% levels(top10_pays$pays)),
+#        aes(x=pays,y=annee))+
+#   geom_violin()+
+#   geom_jitter(alpha=1/5,aes(color=metier))+
+#   scale_x_discrete(
+#     limits=rev(top10_pays$pays))+
+#   ylim(1800,2000)+
+#   coord_flip())
+# 
+# ggplot(data=subset(resultats,resultats$pays %in% levels(top10_pays$pays)),
+#                    aes(x=annee,colour=pays))+
+#   geom_freqpoly(stat='bin',binwidth=5)+
+#   xlim(1800,2000)
+# 
+# top_prof_pays <- resultats %>%
+#   count(pays,metier) %>%
+#   top_n(1) %>% 
+#   filter(n>1) %>% 
+#   ungroup %>% 
+#   droplevels
+# str(top_prof_pays)
+# top_prof_pays
+# 
+# tile_pays <- resultats %>% 
+#   count(pays,metier) %>% 
+#   filter(pays %in% levels(top_prof_pays$pays),
+#          metier %in% levels(top_prof_pays$metier)) %>% 
+#   ungroup %>% 
+#   droplevels
+# 
+# ggplotly(ggplot(data=tile_pays,aes(x=pays,y=metier))+
+#   geom_raster(aes(fill=log10(n),text=paste("Nombre:",n)))+
+#   scale_fill_gradient(low="blue",high="red")+
+#   theme(axis.text.x=element_text(angle=50)))
+```
+
+```{r Word Cloud}
+library(wordcloud)
+tousLesMetiers<-resultats %>%
+  group_by(metier) %>%
+  count(metier)
+
+set.seed(1)
+wordcloud(tousLesMetiers$metier,tousLesMetiers$n,scale=c(3,0.25),min.freq=2,colors=brewer.pal(9,"OrRd")[c(5,6,7,8,9)],random.order = FALSE,rot.per=0.3)
+```
+
+Some descriptions are quite long, and sometimes the most occuring profession wouldn't fit on the wordcloud. I made the function that adds a newline character near the middle of the descriptions, if there is a space or a dash.
+
+```{r}
+couperMot<-function(mot){
+  #coupe une chaine de caractère sur l'espace le plus proche du milieu
+  z=as.character(mot)
+  mi=ceiling(str_length(z)/2)
+  a<-str_locate_all(z,"[ -]")[[1]]
+  if (length(a)==0){ #S'il n'y a pas d'espace ou tiret
+    return(z)
+  }
+  else { #on prend le premier espace après le milieu
+    b<-a[(a-mi>0)[,1],1][1]
+    if (length(b)==0){ #Si les espaces ou tiret sont avant le mileu
+      b<-a[1,1]
+    }
+    str_sub(z,b,b)<-"\n"
+    return(z)
+  }
+}
+tousLesMetiers$new<-mapply(couperMot,tousLesMetiers$metier)
+wordcloud(tousLesMetiers$new,tousLesMetiers$n,scale=c(3,0.25),min.freq=2,colors=brewer.pal(9,"OrRd")[c(5,6,7,8,9)],random.order = FALSE,rot.per=0.3)
+```
+
+```{r}
+# raresMetiers<-resultats %>%
+#   group_by(pays,metier) %>% 
+#   count(pays,metier) %>% 
+#   filter(n==1) %>% 
+#   ungroup() %>% 
+#   droplevels()
+```
+
+```{r Wrapping it all together}
+
+gettingData<-function(prenom){
+  id<-selectionnerID(prenom)
+  
+  #Building the query
+  endpoint <- "https://query.wikidata.org/bigdata/namespace/wdq/sparql"
+
+  prefix<-c("wd","<http://www.wikidata.org/entity/>",
+            "wdt", "<http://www.wikidata.org/prop/direct/>",
+            "wikibase","<http://wikiba.se/ontology#>")
+
+  generic_query <-"SELECT ?item ?itemLabel ?occupationLabel ?paysLabel ?annee
+  WHERE
+  {
+  ?item wdt:P735 wd:REPLACE_ID .
+  ?item wdt:P106 ?occupation .
+  OPTIONAL {?item wdt:P569 ?anneeN} .
+  OPTIONAL {?item wdt:P27 ?pays} .
+  BIND(YEAR(?anneeN) as ?annee) .	
+  SERVICE wikibase:label { bd:serviceParam wikibase:language \"fr,en\" }
+  }
+  ORDER BY DESC (?annee)"
+  
+  query<-sub("REPLACE_ID",id,generic_query)
+  
+  #Getting te data
+  results<-mySPARQL(endpoint,query,ns=prefix,format = "xml")$results
+  
+  #Cleaning the data
+  results<-selectionnerNom(results,"itemLabel","nom")
+  results<-selectionnerNom(results,"occupationLabel","metier")
+  results<-selectionnerNom(results,"paysLabel","pays")
+  
+  return(results)
+}
+emilie<-gettingData("Marie")
+
+occupationWordcloud<-function(results){
+  everyOccupation<-results %>% 
+    group_by(metier) %>% 
+    count(metier)
+  everyOccupation$occ<-mapply(couperMot,everyOccupation$metier)
+  set.seed(14)
+  wordcloud(everyOccupation$occ,everyOccupation$n,
+            scale=c(3,0.25),min.freq=2,
+            colors=brewer.pal(6,"Dark2"),
+            random.order = FALSE,rot.per=0.3)
+}
+
+occupationGraph<-function(results){
+  prenom<-word(results$nom[1])
+  ggplotly(ggplot(results %>% distinct(item),aes(x=annee))+
+    geom_histogram(binwidth = 10,aes(fill=pays))+
+    ggtitle(paste("Répartition des", prenom,"dans Wikidata"))+
+    ylab("Nombre")+
+    xlab("Année de naissance"))
+}
+
+graphMetierPrenom<- function(prenom){
+  #get the id of the wanted firstname
+  id<-selectionnerID(prenom)
+  
+  #Building the query
+  endpoint <- "https://query.wikidata.org/bigdata/namespace/wdq/sparql"
+
+  prefix<-c("wd","<http://www.wikidata.org/entity/>",
+            "wdt", "<http://www.wikidata.org/prop/direct/>",
+            "wikibase","<http://wikiba.se/ontology#>")
+
+  generic_query <-"SELECT ?item ?itemLabel ?occupationLabel ?paysLabel ?annee
+  WHERE
+  {
+  ?item wdt:P735 wd:REPLACE_ID .
+  ?item wdt:P106 ?occupation .
+  OPTIONAL {?item wdt:P569 ?anneeN} .
+  OPTIONAL {?item wdt:P27 ?pays} .
+  BIND(YEAR(?anneeN) as ?annee) .	
+  SERVICE wikibase:label { bd:serviceParam wikibase:language \"fr,en\" }
+  }
+  ORDER BY DESC (?annee)"
+  
+  query<-sub("REPLACE_ID",id,generic_query)
+  
+  #Getting te data
+  results<-mySPARQL(endpoint,query,ns=prefix,format = "xml")$results
+  
+  #Cleaning the data
+  results<-selectionnerNom(results,"itemLabel","nom")
+  results<-selectionnerNom(results,"occupationLabel","metier")
+  results<-selectionnerNom(results,"paysLabel","pays")
+  
+  everyOccupation<-results %>% 
+    group_by(metier) %>% 
+    count(metier)
+  everyOccupation$occ<-mapply(couperMot,everyOccupation$metier)
+  set.seed(14)
+  png(filename = paste(prenom,"_wordcloud.png"))
+  wordcloud(everyOccupation$occ,everyOccupation$n,
+            scale=c(3,0.25),min.freq=2,
+            colors=brewer.pal(6,"Dark2"),
+            random.order = FALSE,rot.per=0.3)
+  dev.off()
+  ggplotly(ggplot(results %>% distinct(item),aes(x=annee))+
+    geom_histogram(binwidth = 10,aes(fill=pays))+
+    ggtitle(paste("Nombre de", prenom,"dans wikidata"))+
+    ylab("Nombre")+
+    xlab("Année"))
+}
+
+```
+
+```{r}
+sylvain<-gettingData("Sylvain")
+occupationWordcloud(sylvain)
+occupationGraph(sylvain)
+tamara<-gettingData("Tamara")
+occupationWordcloud(tamara)
+occupationGraph(tamara)
+charlotte<-gettingData("Charlotte")
+occupationWordcloud(charlotte)
+occupationGraph(charlotte)
+louise<-gettingData("Louise")
+occupationWordcloud(louise)
+occupationGraph(louise)
+basile<-gettingData("Basile")
+occupationWordcloud(basile)
+occupationGraph(basile)
+enric<-gettingData("Enric")
+occupationWordcloud(enric)
+occupationGraph(enric)
+
+#graphMetierPrenom("Florian")
+#graphMetierPrenom("Pierre")
+#graphMetierPrenom("Pascal")
+#graphMetierPrenom("Louis")
+#graphMetierPrenom("Gertrude")
+#gertrude<-gettingData("Jeanne")
+#occupationWordcloud(gertrude)
+#occupationGraph(gertrude)
+
+ggplot(filter(catherine,pays=="France"),aes(x=annee))+
+  geom_freqpoly()+
+  xlim(1900,2000)
+```
+
