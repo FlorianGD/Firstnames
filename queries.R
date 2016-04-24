@@ -63,4 +63,10 @@ cleaningRes<-function(resultats){
   return(resultats)
 }
   
-  
+queryStream <- . %>% 
+  selectionnerID %>% 
+  sub("REPLACE_ID", . ,generic_query) %>% 
+  mySPARQL(endpoint, . , 
+           ns=prefix,format = "xml") %>% 
+  use_series(results) %>% 
+  cleaningRes()
