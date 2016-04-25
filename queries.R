@@ -62,7 +62,7 @@ cleaningRes<-function(resultats){
   resultats<-selectionnerNom(resultats,"paysLabel","pays")
   return(resultats)
 }
-  
+
 queryStream <- . %>% 
   selectionnerID %>% 
   sub("REPLACE_ID", . ,generic_query) %>% 
@@ -70,3 +70,4 @@ queryStream <- . %>%
            ns=prefix,format = "xml") %>% 
   use_series(results) %>% 
   cleaningRes()
+
