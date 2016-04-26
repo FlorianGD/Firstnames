@@ -17,5 +17,5 @@ shinyUI(fluidPage(
                                      value=10,width="100%"))))
     )),
 
-    fluidRow(plotlyOutput("prenomMetiers"))
+    fluidRow(plotOutput("prenomMetiers"))
 ))
