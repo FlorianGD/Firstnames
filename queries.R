@@ -4,6 +4,7 @@ library(tidyr)
 library(magrittr)
 library(SPARQL)
 library(stringr)
+library(shiny)
 
 
 selectionnerID<-function(nom){
@@ -67,3 +68,13 @@ queryStream <- . %>%
   use_series(results) %>% 
   cleaningRes()
 
+queryStreamWithProgress <- . %>% 
+  selectionnerID %>% 
+  {incProgress(0.1,detail="\nBuilding query")
+    sub("REPLACE_ID", . ,generic_query)} %>% 
+  {incProgress(0.1,detail="\nGetting data")
+    mySPARQL(endpoint, . , 
+           ns=prefix,format = "xml")} %>% 
+  use_series(results) %>% 
+  {incProgress(0.6,detail="\nCleaning data")
+    cleaningRes(.)}

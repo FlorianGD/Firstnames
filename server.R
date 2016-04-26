@@ -17,8 +17,8 @@ source("queries.R")  #to get the data from Wikidata
 shinyServer(function(input, output, session) {
   
   dataPrenom<-eventReactive(input$action,{
-    withProgress(value=0.5,message="Fetching data from Wikidata.org...",{
-      queryStream(input$prenom)
+    withProgress(value=0.2,message="Querying Wikidata",{
+      queryStreamWithProgress(input$prenom)
     })
   })
   
