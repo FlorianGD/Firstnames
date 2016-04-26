@@ -25,24 +25,10 @@ shinyServer(function(input, output, session) {
   prenom<-eventReactive(input$action,{
     input$prenom
   })
-  output$text1<-renderText({
-    paste0("Nombre de ligne : ",nrow(dataPrenom()),
-           "\nClasse : ",class(dataPrenom()))
-  })
-  
-  output$text2<-renderPrint({
-    dataset<-dataPrenom()
-    summary(dataset)
-  })
-  
-  output$donnees<-renderTable({
-    head(dataPrenom(), n = input$numHead)
-  })
-  
   
   output$prenomMetiers<-renderPlotly({
     ggplotly(ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
-      geom_histogram(binwidth = 10,aes(fill=pays))+
+      geom_histogram(binwidth = input$regroup,aes(fill=pays))+
       ggtitle(paste("Répartition des", prenom() ,"dans Wikidata"))+
       ylab("Nombre")+
       xlab("Année de naissance") +
