@@ -20,7 +20,7 @@ shinyUI(fluidPage(
         ),
       mainPanel(
         textOutput("text1"),
-        plotOutput("prenomMetiers"),
+        plotlyOutput("prenomMetiers"),
         verbatimTextOutput("text2"),
         tableOutput("donnees")
       )

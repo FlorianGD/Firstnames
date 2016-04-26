@@ -8,6 +8,7 @@ library(tidyr)
 library(dplyr)
 library(ggthemes)
 library(magrittr)
+library(plotly)
 
 theme_set(theme_minimal(12))
 
@@ -33,13 +34,14 @@ shinyServer(function(input, output, session) {
     head(dataPrenom(), n = input$numHead)
   })
   
-  output$prenomMetiers<-renderPlot({
-    ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
+  output$prenomMetiers<-renderPlotly({
+    ggplotly(ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
       geom_histogram(binwidth = 10,aes(fill=pays))+
       ggtitle(paste("Répartition des", input$prenom ,"dans Wikidata"))+
       ylab("Nombre")+
       xlab("Année de naissance") +
       scale_x_continuous(limits=c(input$dates[1],input$dates[2]))+
       theme(legend.position = "bottom")
+      )
   })
 })
