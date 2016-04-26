@@ -7,6 +7,7 @@ library(stringr)
 library(tidyr)
 library(dplyr)
 library(ggthemes)
+library(magrittr)
 
 theme_set(theme_minimal(12))
 
@@ -14,28 +15,31 @@ source("queries.R")  #to get the data from Wikidata
 
 shinyServer(function(input, output, session) {
   
-  dataPrenom<-eventReactive(input$action, {
-    cleaningRes(mySPARQL(endpoint,
-             sub("REPLACE_ID",selectionnerID(input$prenom),generic_query),
-             ns=prefix,format = "xml")$results)
+  dataPrenom<-eventReactive(input$action,{
+    queryStream(input$prenom)
+  })
+ 
+  output$text1<-renderText({
+    paste0("Nombre de ligne : ",nrow(dataPrenom()),
+           "\nClasse : ",class(dataPrenom()))
   })
   
-  updateNumericInput(session, "dateDebut", value = min(dataPrenom()$annee))
+  output$text2<-renderPrint({
+    dataset<-dataPrenom()
+    summary(dataset)
+  })
   
-  updateNumericInput(session, "dateFin", value = max(dataPrenom()$annee))
-  
-  output$text1<-renderText({
-    paste0("This is your text: ",input$prenom)
+  output$donnees<-renderTable({
+    head(dataPrenom(), n = input$numHead)
   })
   
   output$prenomMetiers<-renderPlot({
-    prenom<-word(dataPrenom()$nom[1])
     ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
       geom_histogram(binwidth = 10,aes(fill=pays))+
-      ggtitle(paste("Répartition des", prenom,"dans Wikidata"))+
+      ggtitle(paste("Répartition des", input$prenom ,"dans Wikidata"))+
       ylab("Nombre")+
-      xlab("Année de naissance")+
-      scale_x_continuous(limits=c(input$dateDebut,input$dateFin))
+      xlab("Année de naissance") +
+      scale_x_continuous(limits=c(input$dates[1],input$dates[2]))+
       theme(legend.position = "bottom")
   })
 })
