@@ -1,12 +1,8 @@
-
 library(WikidataR)
 library(dplyr)
 library(tidyr)
 library(magrittr)
-library(ggthemes)
-library(plotly)
 library(SPARQL)
-library(wordcloud)
 library(stringr)
 
 
