@@ -26,10 +26,13 @@ shinyServer(function(input, output, session) {
     input$prenom
   })
   
+  
+  
   output$prenomMetiers<-renderPlot({
     ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
       geom_histogram(binwidth = input$regroup,aes(fill=pays))+
-      ggtitle(paste("Répartition des", prenom() ,"dans Wikidata"))+
+      ggtitle(paste("Répartition des", prenom() ,
+                    "dans Wikidata, tous les",input$regroup,"ans"))+
       ylab("Nombre")+
       xlab("Année de naissance") +
       scale_x_continuous(limits=c(input$dates[1],input$dates[2]))+
