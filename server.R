@@ -32,7 +32,7 @@ shinyServer(function(input, output, session) {
   })
   
   
-  output$prenomMetiers<-renderPlot({
+  output$naissance<-renderPlot({
     ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
       geom_histogram(binwidth = input$regroup,aes(fill=pays))+
       ggtitle(paste("Années de naissance des", prenom() ,
@@ -41,5 +41,22 @@ shinyServer(function(input, output, session) {
       xlab(NULL) +
       scale_x_continuous(limits=c(input$dates[1],input$dates[2]))+
       theme(legend.position = "bottom")
+  })
+  
+  output$metiers<-renderPlot({
+    everyOccupation<-dataPrenom() %>% 
+      group_by(metier) %>% 
+      count(metier)
+    
+    if(input$cut){
+      everyOccupation$occ<-mapply(couperMot,everyOccupation$metier)}
+    else everyOccupation$occ<-everyOccupation$metier
+    
+    set.seed(14)
+    wordcloud(everyOccupation$occ,everyOccupation$n,
+              scale=c(input$scaleMax,input$scaleMin),
+              min.freq=input$minFreq,
+              colors=brewer.pal(6,"Dark2"),
+              random.order = FALSE,rot.per=0.3)
   })
 })
