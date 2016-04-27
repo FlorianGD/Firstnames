@@ -49,7 +49,7 @@ selectionnerNom<-function(x,colonne,nom) {
   a<-x %>%
     separate_(colonne,c("debut",nom,"fin"),sep="\"",remove=TRUE) %>%
     select(-debut,-fin)
-  a[,nom]<-factor(a[,nom])
+  a[,nom]<-ordered(a[,nom])
   return(a)
 }
 
