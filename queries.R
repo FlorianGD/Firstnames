@@ -5,7 +5,7 @@ library(magrittr)
 library(SPARQL)
 library(stringr)
 library(shiny)
-
+library(wordcloud)
 
 selectionnerID<-function(nom){
   liste <- find_item(nom)
@@ -78,3 +78,22 @@ queryStreamWithProgress <- . %>%
   use_series(results) %>% 
   {incProgress(0.6,detail="\nCleaning data")
     cleaningRes(.)}
+
+couperMot<-function(mot){
+  #coupe une chaine de caractère sur l'espace le plus proche du milieu
+  z=as.character(mot)
+  mi=ceiling(str_length(z)/2)
+  a<-str_locate_all(z,"[ -]")[[1]]
+  if (length(a)==0){ #S'il n'y a pas d'espace ou tiret
+    return(z)
+  }
+  else { #on prend le premier espace après le milieu
+    b<-a[(a-mi>0)[,1],1][1]
+    if (length(b)==0){ #Si les espaces ou tiret sont avant le mileu
+      b<-a[1,1]
+    }
+    str_sub(z,b,b)<-"\n"
+    return(z)
+  }
+}
+
