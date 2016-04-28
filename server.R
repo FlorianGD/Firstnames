@@ -23,23 +23,36 @@ shinyServer(function(input, output, session) {
       maxRes<-max(res$annee,na.rm=TRUE)
       updateSliderInput(session,"dates",min=minRes,max=maxRes,
                         value=c(minRes,maxRes))
+      updateSelectizeInput(session,"pays",choices=c("Choisir un ou plusieurs"="",
+                                                    "Tous",levels(res$pays)))
       res
     })
   })
   
-  prenom<-eventReactive(input$action,{
-    input$prenom
-  })
-  
-  
   output$naissance<-renderPlot({
-    ggplot(dataPrenom() %>% distinct(item),aes(x=annee))+
+    if(is.null(input$pays) | "Tous" %in% input$pays){
+      newdata<-dataPrenom() %>% 
+        distinct(item)
+    }
+    else{
+      newdata<-dataPrenom() %>%
+        filter(pays %in% input$pays) %>%
+        distinct(item)
+    }
+    
+    minGraph<-floor(input$dates[1]/10)*10
+    maxGraph<-ceiling(input$dates[2]/10)*10
+    
+    ggplot(newdata,aes(x=annee))+
       geom_histogram(binwidth = input$regroup,aes(fill=pays))+
-      ggtitle(paste("Années de naissance des", prenom() ,
+      ggtitle(paste("Années de naissance des", isolate(input$prenom) ,
                     "dans Wikidata, regroupé par",input$regroup,"ans"))+
       ylab("Nombre")+
       xlab(NULL) +
-      scale_x_continuous(limits=c(input$dates[1],input$dates[2]))+
+      scale_x_continuous(limits=c(minGraph,maxGraph),
+                         breaks=seq(minGraph,maxGraph,
+                                    by=max(5,(maxGraph-minGraph)/10)))+
+      scale_fill_hue("Pays")+
       theme(legend.position = "bottom")
   })
   
