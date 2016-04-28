@@ -1,18 +1,22 @@
 library(shiny)
+library(shinyjs)
 
 shinyUI(fluidPage(
+  useShinyjs(),
     fluidRow(column(6,h1("Prénoms dans Wikidata")),
              column(6,wellPanel(fluidRow(
-               column(6,textInput("prenom", label = "Saisir un prénom", 
+               column(4,textInput("prenom", label = "Saisir un prénom", 
                                           value = "Malika")),
-               column(6,br(),
+               column(4,br(),
                       actionButton("action", label = "Récupérer",width="100%",
-                                             icon=icon("wikipedia-w")))
+                                             icon=icon("wikipedia-w"))),
+               column(4,br(),
+                      downloadButton("download",label="Télécharger"))
                )))),
     fluidRow(
       column(6,wellPanel(fluidRow(
         column(6,sliderInput("dates",
-                                     label = "Sélectionner les dates :",
+                                     label = "Dates",
                                      min = 1700, max = 2010, value = c(1800, 2010),
                                      round=TRUE,step = 1,sep="",
                                      width="100%")),

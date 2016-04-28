@@ -15,6 +15,7 @@ theme_set(theme_minimal(12))
 source("queries.R")  #to get the data from Wikidata
 
 shinyServer(function(input, output, session) {
+  disable("download")
   
   dataPrenom<-eventReactive(input$action,{
     withProgress(value=0.2,message="Querying Wikidata",{
@@ -25,9 +26,19 @@ shinyServer(function(input, output, session) {
                         value=c(minRes,maxRes))
       updateSelectizeInput(session,"pays",choices=c("Choisir un ou plusieurs"="",
                                                     "Tous",levels(res$pays)))
+      enable("download")
       res
     })
   })
+  
+  output$download <- downloadHandler(
+    filename = function() { 
+      paste(input$prenom, '.csv', sep='') 
+    },
+    content = function(file) {
+      write.csv(dataPrenom(), file)
+    }
+  )
   
   output$naissance<-renderPlot({
     if(is.null(input$pays) | "Tous" %in% input$pays){
