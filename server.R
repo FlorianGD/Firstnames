@@ -19,14 +19,16 @@ shinyServer(function(input, output, session) {
   
   dataPrenom<-eventReactive(input$action,{
     withProgress(value=0.2,message="Querying Wikidata",{
+      disable("download")
       res<-queryStreamWithProgress(input$prenom)
       minRes<-min(res$annee,na.rm=TRUE)
       maxRes<-max(res$annee,na.rm=TRUE)
       updateSliderInput(session,"dates",min=minRes,max=maxRes,
                         value=c(minRes,maxRes))
       updateSelectizeInput(session,"pays",choices=c("Choisir un ou plusieurs"="",
-                                                    "Tous",levels(res$pays)))
-      updateSliderInput(session,"nbMetiers",max=length(levels(res$metier)))
+                                                    "Tous",names(sort(-table(res$pays)))))
+      updateSliderInput(session,"nbMetiers",max=length(levels(res$metier)),
+                        value=10)
       enable("download")
       res
     })
@@ -61,6 +63,7 @@ shinyServer(function(input, output, session) {
                     "dans Wikidata, regroupé par",input$regroup,"ans"))+
       ylab("Nombre")+
       xlab(NULL) +
+      scale_y_discrete()+
       scale_x_continuous(limits=c(minGraph,maxGraph),
                          breaks=seq(minGraph,maxGraph,
                                     by=max(5,(maxGraph-minGraph)/10)))+
@@ -95,12 +98,32 @@ shinyServer(function(input, output, session) {
     met$metier <-reorder(met$metier,met$n,identity)
     
     ggplot(data=met,aes(x=metier,y=n))+
-      geom_bar(stat="identity")+
+      geom_bar(stat="identity",fill="darkorange")+
       scale_x_discrete(limits=levels(met$metier))+
       xlab(NULL)+
       ylab(NULL)+
       ggtitle(label = paste("Top",input$nbMetiers,"des métiers de",
-                            isolate(input$prenom)))+
+                            isolate(input$prenom),"dans Wikidata"))+
+      coord_flip()
+  })
+  
+  output$histoPays<-renderPlot({
+    topPays<-dataPrenom() %>% 
+      group_by(pays) %>% 
+      summarise(n=n()) %>% 
+      arrange(desc(n)) %>% 
+      top_n(input$nbPays,n) %>% 
+      droplevels() 
+    
+    topPays$pays <-reorder(topPays$pays,topPays$n,identity)
+    
+    ggplot(data=topPays,aes(x=pays,y=n))+
+      geom_bar(stat="identity",fill="deepskyblue2")+
+      scale_x_discrete(limits=levels(topPays$pays))+
+      xlab(NULL)+
+      ylab(NULL)+
+      ggtitle(label = paste("Top",input$nbPays,"des nationalités des",
+                            isolate(input$prenom),"dans Wikidata"))+
       coord_flip()
   })
 })
