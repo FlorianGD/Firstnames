@@ -49,7 +49,9 @@ selectionnerNom<-function(x,colonne,nom) {
   a<-x %>%
     separate_(colonne,c("debut",nom,"fin"),sep="\"",remove=TRUE) %>%
     select(-debut,-fin)
-  a[,nom]<-ordered(a[,nom])
+  a[[nom]]<-ordered(a[[nom]])
+  a[[nom]]<-addNA(a[[nom]])
+  levels(a[[nom]])[length(levels(a[[nom]]))]<-"Inconnu"
   return(a)
 }
 
