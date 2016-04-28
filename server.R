@@ -26,6 +26,7 @@ shinyServer(function(input, output, session) {
                         value=c(minRes,maxRes))
       updateSelectizeInput(session,"pays",choices=c("Choisir un ou plusieurs"="",
                                                     "Tous",levels(res$pays)))
+      updateSliderInput(session,"nbMetiers",max=length(levels(res$metier)))
       enable("download")
       res
     })
@@ -82,5 +83,24 @@ shinyServer(function(input, output, session) {
               min.freq=input$minFreq,
               colors=brewer.pal(6,"Dark2"),
               random.order = FALSE,rot.per=0.3)
+  })
+  output$histoMetier<-renderPlot({
+    met<-dataPrenom() %>% 
+      group_by(metier) %>% 
+      summarise(n=n()) %>% 
+      arrange(desc(n)) %>% 
+      top_n(input$nbMetiers,n) %>% 
+      droplevels() 
+    
+    met$metier <-reorder(met$metier,met$n,identity)
+    
+    ggplot(data=met,aes(x=metier,y=n))+
+      geom_bar(stat="identity")+
+      scale_x_discrete(limits=levels(met$metier))+
+      xlab(NULL)+
+      ylab(NULL)+
+      ggtitle(label = paste("Top",input$nbMetiers,"des métiers de",
+                            isolate(input$prenom)))+
+      coord_flip()
   })
 })
