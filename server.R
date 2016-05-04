@@ -17,6 +17,24 @@ source("queries.R")  #to get the data from Wikidata
 shinyServer(function(input, output, session) {
   disable("download")
   
+  output$info<-renderUI({
+    switch(input$tabset,
+           "tabAnnees"=tags$p(strong("Dates"),"permet de choisir l'intervalle à afficher ;",
+                              br(),strong("Années"), "donne la largeur des barres de l'histogramme ;",
+                              br(),strong("Pays"),"permet de filtrer sur un ou plusieurs pays : laisser vide pour tous les pays,
+                              la liste qui s'affiche est classé dans l'ordre décroissant 
+                              du nombre de personnes ayant le prénom cherché dans ce pays."),
+           "tabPays"=tags$p(strong("Pays"),"permet de sélectionner le nombre de pays à afficher ;",br(), 
+                            em("Inconnu"),"indique que la donnée n'est pas précisée dans Wikidata."),
+           "tabNuageMetiers"=tags$p(em("Attention")," : certains mots trop longs peuvent ne pas s'afficher.",br(),br(),
+                                    strong("Couper métiers"),"permet d'insérer un retour à la ligne si les mots contiennent un esapce ou tiret ;",
+                                    br(),strong("Fréquence minimum"), "les métiers appraissant moins fréquemment que ce paramètre ne seront pas affichés ;" ,
+                                    br(),strong("Echelle min"),"et",strong("Echelle max"), "permettent de régler la taille des mots, en fonction de leur fréquence."),
+           "tabMetiers"=tags$p(strong("Métiers"),"permet de sélectionner le nombre de métiers à afficher ;",br(), 
+                               em("Inconnu"),"indique que la donnée n'est pas précisée dans Wikidata.")
+    )
+  })
+  
   dataPrenom<-eventReactive(input$action,{
     withProgress(value=0.2,message="Querying Wikidata",{
       disable("download")
@@ -26,7 +44,7 @@ shinyServer(function(input, output, session) {
       updateSliderInput(session,"dates",min=minRes,max=maxRes,
                         value=c(minRes,maxRes))
       updateSelectizeInput(session,"pays",choices=c("Choisir un ou plusieurs"="",
-                                                    "Tous",names(sort(-table(res$pays)))))
+                                                    names(sort(-table(res$pays)))))
       updateSliderInput(session,"nbMetiers",max=length(levels(res$metier)),
                         value=10)
       enable("download")
@@ -44,7 +62,7 @@ shinyServer(function(input, output, session) {
   )
   
   output$naissance<-renderPlot({
-    if(is.null(input$pays) | "Tous" %in% input$pays){
+    if(is.null(input$pays)){
       newdata<-dataPrenom() %>% 
         distinct(item)
     }
@@ -63,7 +81,6 @@ shinyServer(function(input, output, session) {
                     "dans Wikidata, regroupé par",input$regroup,"ans"))+
       ylab("Nombre")+
       xlab(NULL) +
-      scale_y_discrete()+
       scale_x_continuous(limits=c(minGraph,maxGraph),
                          breaks=seq(minGraph,maxGraph,
                                     by=max(5,(maxGraph-minGraph)/10)))+

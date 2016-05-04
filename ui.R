@@ -11,14 +11,16 @@ shinyUI(fluidPage(
                  actionButton("action", label = "Récupérer",width="100%",
                               icon=icon("wikipedia-w")),
                  br(),
+                 p("Les informations sont extraites de", a(href="https://www.wikidata.org","wikidata.org"),"via SPARQL."),
                  br(),
+                 uiOutput(outputId="info",inline=TRUE,container=tags$p),
                  hr(),
+                 downloadButton("download",label="Télécharger les données"),
                  br(),
-                 br(),
-                 downloadButton("download",label="Télécharger les données")),
+                 p("Récupérez les données sous forme de fichier csv.")),
     mainPanel(width=9,
-      tabsetPanel(type="tab",
-                  tabPanel("Années de naissance",
+      tabsetPanel(id="tabset",type="tab",
+                  tabPanel("Années de naissance",value="tabAnnees",
                            wellPanel(fluidRow(
                              column(6,sliderInput("dates",
                                                   label = "Dates",
@@ -27,17 +29,17 @@ shinyUI(fluidPage(
                                                   width="100%")),
                              column(2,sliderInput("regroup",label="Années",min=1,max=10,
                                                   value=10,width="100%")),
-                             column(4,selectizeInput("pays",label="Pays",choices=c("Choisir un ou plusieurs"="","Tous"),
+                             column(4,selectizeInput("pays",label="Pays",choices=c("Choisir un ou plusieurs"=""),
                                                      multiple=TRUE)))),
                            fluidRow(plotOutput("naissance"))
                            ),
-                  tabPanel("Top des pays",
+                  tabPanel("Top des pays", value = "tabPays",
                            wellPanel(fluidRow(
                              sliderInput("nbPays",label="Nombre de pays",
                                          min=1,max=30,value=10,step=1))),
                            fluidRow(plotOutput("histoPays"))
                   ),
-                  tabPanel("Nuage des métiers",
+                  tabPanel("Nuage des métiers", value="tabNuageMetiers",
                            wellPanel(fluidRow(
                              column(2,checkboxInput("cut",label="Couper métiers",value=TRUE)),
                              column(4,sliderInput("minFreq",label="Fréquence minimum",
@@ -49,7 +51,7 @@ shinyUI(fluidPage(
                            )),
                            fluidRow(plotOutput("metiers"))
                   ),
-                  tabPanel("Top des métiers",
+                  tabPanel("Top des métiers",value = "tabMetiers",
                            wellPanel(fluidRow(
                              sliderInput("nbMetiers",label="Nombre de métiers",
                                          min=1,max=20,value=10,step=1))),
