@@ -23,7 +23,8 @@ shinyServer(function(input, output, session) {
                               br(),strong("Années"), "donne la largeur des barres de l'histogramme ;",
                               br(),strong("Pays"),"permet de filtrer sur un ou plusieurs pays : laisser vide pour tous les pays,
                               la liste qui s'affiche est classé dans l'ordre décroissant 
-                              du nombre de personnes ayant le prénom cherché dans ce pays."),
+                              du nombre de personnes ayant le prénom cherché dans ce pays.",
+                              br(),em("Inconnu"),"indique que le pays n'est pas renseigné dans Wikidata."),
            "tabPays"=tags$p(strong("Pays"),"permet de sélectionner le nombre de pays à afficher ;",br(), 
                             em("Inconnu"),"indique que la donnée n'est pas précisée dans Wikidata."),
            "tabNuageMetiers"=tags$p(em("Attention")," : certains mots trop longs peuvent ne pas s'afficher.",br(),br(),
