@@ -1,9 +1,10 @@
 library(shiny)
 library(shinyjs)
 
-shinyUI(fluidPage(
+shinyUI(fluidPage(title="Prénoms dans Wikidata",
   useShinyjs(),
-  titlePanel("Prénoms dans Wikidata"),
+  tags$h2(id="pretitle","Prénoms dans Wikidata"),
+  uiOutput(outputId="title",inline=FALSE,container=tags$div),
   sidebarLayout(
     sidebarPanel(width=3,
                  textInput("prenom", label = "Saisir un prénom", 
@@ -24,7 +25,7 @@ shinyUI(fluidPage(
                            wellPanel(fluidRow(
                              column(6,sliderInput("dates",
                                                   label = "Dates",
-                                                  min = 1700, max = 2010, value = c(1800, 2010),
+                                                  min = 1700, max = 2010, value = c(1700, 2010),
                                                   round=TRUE,step = 1,sep="",
                                                   width="100%")),
                              column(2,sliderInput("regroup",label="Années",min=1,max=10,

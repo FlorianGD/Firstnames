@@ -47,9 +47,18 @@ shinyServer(function(input, output, session) {
                                                     names(sort(-table(res$pays)))))
       updateSliderInput(session,"nbMetiers",max=length(levels(res$metier)),
                         value=10)
+      shinyjs::hide("pretitle")
       enable("download")
       res
     })
+  })
+  
+  output$title<-renderUI({
+    metier<- dataPrenom() %>% count(metier) %>% top_n(1,n) %>% use_series(metier)
+    metiers<-paste(metier,collapse="/")
+    pays<- dataPrenom() %>% count(pays) %>% top_n(1,n) %>% use_series(pays)
+    pays2<-paste(pays,collapse = "/")
+    tags$h2(paste("Dans Wikidata,",isolate(input$prenom),"est",metiers,"en",pays2))
   })
   
   output$download <- downloadHandler(
