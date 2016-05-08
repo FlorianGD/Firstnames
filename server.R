@@ -116,8 +116,7 @@ shinyServer(function(input, output, session) {
   })
   output$histoMetier<-renderPlot({
     met<-dataPrenom() %>% 
-      group_by(metier) %>% 
-      summarise(n=n()) %>% 
+      count(metier) %>% 
       arrange(desc(n)) %>% 
       top_n(input$nbMetiers,n) %>% 
       droplevels() 
@@ -127,6 +126,7 @@ shinyServer(function(input, output, session) {
     ggplot(data=met,aes(x=metier,y=n))+
       geom_bar(stat="identity",fill="darkorange")+
       scale_x_discrete(limits=levels(met$metier))+
+      geom_text(aes(label=n),hjust=1.5,colour="white")+
       xlab(NULL)+
       ylab(NULL)+
       ggtitle(label = paste("Top",input$nbMetiers,"des métiers de",
@@ -136,8 +136,7 @@ shinyServer(function(input, output, session) {
   
   output$histoPays<-renderPlot({
     topPays<-dataPrenom() %>% 
-      group_by(pays) %>% 
-      summarise(n=n()) %>% 
+      count(pays) %>% 
       arrange(desc(n)) %>% 
       top_n(input$nbPays,n) %>% 
       droplevels() 
@@ -147,6 +146,7 @@ shinyServer(function(input, output, session) {
     ggplot(data=topPays,aes(x=pays,y=n))+
       geom_bar(stat="identity",fill="deepskyblue2")+
       scale_x_discrete(limits=levels(topPays$pays))+
+      geom_text(aes(label=n),hjust=1.5)+
       xlab(NULL)+
       ylab(NULL)+
       ggtitle(label = paste("Top",input$nbPays,"des nationalités des",
