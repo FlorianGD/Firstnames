@@ -11,6 +11,9 @@
 # RStudio files
 .Rproj.user/
 
+#Shinyapp.io
+rsconnect
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
