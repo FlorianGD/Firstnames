@@ -8,7 +8,6 @@ library(tidyr)
 library(dplyr)
 library(ggthemes)
 library(magrittr)
-library(plotly)
 
 theme_set(theme_minimal(12))
 
