@@ -25,13 +25,13 @@ shinyServer(function(input, output, session) {
                               du nombre de personnes ayant le prénom cherché dans ce pays.",
                               br(),em("Inconnu"),"indique que le pays n'est pas renseigné dans Wikidata."),
            "tabPays"=tags$p(strong("Pays"),"permet de sélectionner le nombre de pays à afficher ;",br(), 
-                            em("Inconnu"),"indique que la donnée n'est pas précisée dans Wikidata."),
+                            em("Inconnu"),"indique que le pays n'est pas renseigné dans Wikidata."),
            "tabNuageMetiers"=tags$p(em("Attention")," : certains mots trop longs peuvent ne pas s'afficher.",br(),br(),
                                     strong("Couper métiers"),"permet d'insérer un retour à la ligne si les mots contiennent un esapce ou tiret ;",
                                     br(),strong("Fréquence minimum"), "les métiers appraissant moins fréquemment que ce paramètre ne seront pas affichés ;" ,
                                     br(),strong("Echelle min"),"et",strong("Echelle max"), "permettent de régler la taille des mots, en fonction de leur fréquence."),
            "tabMetiers"=tags$p(strong("Métiers"),"permet de sélectionner le nombre de métiers à afficher ;",br(), 
-                               em("Inconnu"),"indique que la donnée n'est pas précisée dans Wikidata.")
+                               em("Inconnu"),"indique que le métier n'est pas précisé dans Wikidata.")
     )
   })
   
