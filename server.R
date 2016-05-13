@@ -15,7 +15,7 @@ source("queries.R")  #to get the data from Wikidata
 
 shinyServer(function(input, output, session) {
   disable("download")
-  
+  runjs("document.getElementById('prenom').focus()")
   output$info<-renderUI({
     switch(input$tabset,
            "tabAnnees"=tags$p(strong("Dates"),"permet de choisir l'intervalle à afficher ;",

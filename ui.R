@@ -8,7 +8,7 @@ shinyUI(fluidPage(title="Prénoms dans Wikidata",
   sidebarLayout(
     sidebarPanel(width=3,
                  textInput("prenom", label = "Saisir un prénom", 
-                           value = "Malika"),
+                           value = ""),
                  actionButton("action", label = " Récupérer",width="100%",
                               icon=icon("wikipedia-w")),
                  br(),
