@@ -20,18 +20,21 @@ shinyServer(function(input, output, session) {
     switch(input$tabset,
            "tabAnnees"=tags$p(strong("Dates"),"permet de choisir l'intervalle à afficher ;",
                               br(),strong("Années"), "donne la largeur des barres de l'histogramme ;",
-                              br(),strong("Pays"),"permet de filtrer sur un ou plusieurs pays : laisser vide pour tous les pays,
-                              la liste qui s'affiche est classé dans l'ordre décroissant 
+                              br(),strong("Pays"),"permet de filtrer sur un ou plusieurs pays ; laisser vide pour tous les pays,
+                              la liste qui s'affiche est classée dans l'ordre décroissant 
                               du nombre de personnes ayant le prénom cherché dans ce pays.",
                               br(),em("Inconnu"),"indique que le pays n'est pas renseigné dans Wikidata."),
            "tabPays"=tags$p(strong("Pays"),"permet de sélectionner le nombre de pays à afficher ;",br(), 
                             em("Inconnu"),"indique que le pays n'est pas renseigné dans Wikidata."),
-           "tabNuageMetiers"=tags$p(em("Attention")," : certains mots trop longs peuvent ne pas s'afficher.",br(),br(),
+           "tabNuageMetiers"=tags$p(em("Attention")," : certains mots trop longs peuvent ne pas s'afficher.",br(),
                                     strong("Couper métiers"),"permet d'insérer un retour à la ligne si les mots contiennent un esapce ou tiret ;",
                                     br(),strong("Fréquence minimum"), "les métiers appraissant moins fréquemment que ce paramètre ne seront pas affichés ;" ,
-                                    br(),strong("Echelle min"),"et",strong("Echelle max"), "permettent de régler la taille des mots, en fonction de leur fréquence."),
+                                    br(),strong("Echelle min"),"et",strong("Echelle max"), "permettent de régler la taille des mots, en fonction de leur fréquence.",
+                                    br(),em("Note :"),"par construction de la requête, ne sont récupérées que les informations quand le métier est précisé. 
+                                    Une personne peut avoir plusieurs métiers."),
            "tabMetiers"=tags$p(strong("Métiers"),"permet de sélectionner le nombre de métiers à afficher ;",br(), 
-                               em("Inconnu"),"indique que le métier n'est pas précisé dans Wikidata.")
+                               em("Note :"),"par construction de la requête, les informations ne sont récupérées que lorsque le métier est précisé. 
+                               Une personne peut avoir plusieurs métiers.")
     )
   })
   
@@ -113,6 +116,7 @@ shinyServer(function(input, output, session) {
               colors=brewer.pal(6,"Dark2"),
               random.order = FALSE,rot.per=0.3)
   })
+  
   output$histoMetier<-renderPlot({
     met<-dataPrenom() %>% 
       count(metier) %>% 
