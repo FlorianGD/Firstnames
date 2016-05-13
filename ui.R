@@ -1,9 +1,9 @@
 library(shiny)
 library(shinyjs)
 
-shinyUI(fluidPage(title="Prénoms dans Wikidata",
+shinyUI(fluidPage(title="Prénoms et métiers dans Wikidata",
   useShinyjs(),
-  tags$h2(id="pretitle","Prénoms dans Wikidata"),
+  tags$h2(id="pretitle","Prénoms et métiers dans Wikidata"),
   uiOutput(outputId="title",inline=FALSE,container=tags$div),
   sidebarLayout(
     sidebarPanel(width=3,
