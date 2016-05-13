@@ -1,5 +1,5 @@
 # Firstnames
-Retrieving information of firstnames in Wikipedia via Wikidata
+Retrieving information about firstnames and occupations in Wikipedia via Wikidata.
 
 ## Presentation
 The idea is to study the data about given names from [wikipedia.org](http://wikipedia.org), and in particular, what are the occupations of people with that given name.
