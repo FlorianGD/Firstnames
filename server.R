@@ -76,12 +76,12 @@ shinyServer(function(input, output, session) {
   output$naissance<-renderPlot({
     if(is.null(input$pays)){
       newdata<-dataPrenom() %>% 
-        distinct(item)
+        distinct(item, .keep_all = TRUE)
     }
     else{
       newdata<-dataPrenom() %>%
         filter(pays %in% input$pays) %>%
-        distinct(item)
+        distinct(item, .keep_all = TRUE)
     }
     
     minGraph<-floor(input$dates[1]/10)*10
